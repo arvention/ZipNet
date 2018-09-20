@@ -47,13 +47,13 @@ def main(version, config):
     mkdir(config.model_save_path)
 
     if config.mode == 'train':
-        data_loader = get_loader(config.train_data_path,
+        data_loader = get_loader(config.data_path + config.train_data_path,
                                  config.train_x_key, config.train_y_key,
                                  config.batch_size, config.mode)
         solver = Solver(version, "data_loader", vars(config))
         solver.train()
     elif config.mode == 'test':
-        data_loader = get_loader(config.test_data_path,
+        data_loader = get_loader(config.data_path + config.test_data_path,
                                  config.test_x_key, config.test_y_key,
                                  config.batch_size, config.mode)
         solver = Solver(version, data_loader, vars(config))
@@ -64,13 +64,13 @@ if __name__ == '__main__':
     torch.set_printoptions(threshold=np.nan)
     parser = argparse.ArgumentParser()
 
-    # model hyper-parameters
-    parser.add_argument('--lr', type=float, default=0.01)
-    parser.add_argument('--momentum', type=float, default=0.9)
+    # dataset info
     parser.add_argument('--input_channels', type=int, default=3)
     parser.add_argument('--class_count', type=int, default=256)
 
     # training settings
+    parser.add_argument('--lr', type=float, default=0.01)
+    parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--num_epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--pretrained_model', type=str,
@@ -79,10 +79,12 @@ if __name__ == '__main__':
     # misc
     parser.add_argument('--mode', type=str, default='train',
                         choices=['train', 'test'])
+    parser.add_argument('--use_gpu', type=str2bool, default=True)
     parser.add_argument('--use_tensorboard', type=str2bool,
                         default=True)
 
     # dataset
+    parser.add_argument('--data_path', type=str, default='../data/c256/')
     parser.add_argument('--train_data_path', type=str,
                         default='data/caltech_256_60_train_nobg_norm.hdf5')
     parser.add_argument('--train_x_key', type=str, default='train_x')
