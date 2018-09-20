@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.init as init
 
 
-class DeepFire(nn.Module):
-    """DeepFire Module"""
+class ZipModule(nn.Module):
+    """Zip Module"""
 
     def __init__(
         self,
@@ -13,45 +13,7 @@ class DeepFire(nn.Module):
         e1x1_channels,
         e3x3_channels
     ):
-        super(DeepFire, self).__init__()
-
-        self.in_channels = in_channels
-        self.squeeze_channels = squeeze_channels
-        self.e1x1_channels = e1x1_channels
-        self.e3x3_channels = e3x3_channels
-
-        self.network = self.get_network()
-
-    def get_network(self):
-        layers = []
-
-        layers.append(Fire(self.in_channels,
-                           self.squeeze_channels,
-                           self.in_channels // 2,
-                           self.in_channels // 2))
-
-        layers.append(Fire(self.in_channels // 2 + self.in_channels // 2,
-                           self.squeeze_channels,
-                           self.e1x1_channels,
-                           self.e3x3_channels))
-
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.network(x)
-
-
-class Fire(nn.Module):
-    """Fire Module based on SqueezeNet"""
-
-    def __init__(
-        self,
-        in_channels,
-        squeeze_channels,
-        e1x1_channels,
-        e3x3_channels
-    ):
-        super(Fire, self).__init__()
+        super(ZipModule, self).__init__()
 
         self.in_channels = in_channels
         self.squeeze_channels = squeeze_channels
@@ -101,7 +63,7 @@ class Fire(nn.Module):
         ], 1)
 
 
-class ZFNetLite(nn.Module):
+class ZipNet(nn.Module):
 
     """ZFNetLite"""
 
@@ -110,12 +72,12 @@ class ZFNetLite(nn.Module):
         channels,
         class_count
     ):
-        super(ZFNetLite, self).__init__()
+        super(ZipNet, self).__init__()
         self.channels = channels
         self.class_count = class_count
 
-        self.features = self.get_features()
-        self.classifier = self.get_classifier()
+        self.conv_net = self.get_conv_net()
+        self.fc_net = self.get_fc_net()
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -128,7 +90,7 @@ class ZFNetLite(nn.Module):
                 if m.bias is not None:
                     init.constant_(m.bias, 0)
 
-    def get_features(self):
+    def get_conv_net(self):
         layers = []
 
         # in_channels = self.channels, out_channels = 64
@@ -138,44 +100,52 @@ class ZFNetLite(nn.Module):
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True))
 
         # in_channels = 64, squeeze_channels = 16
+        # e1x1_channels = 32, e3x3_channels = 32 -> out_channels = 64
+        layers.append(ZipModule(64, 16, 32, 32))
+
+        # in_channels = 64, squeeze_channels = 16
         # e1x1_channels = 64, e3x3_channels = 64 -> out_channels = 128
-        layers.append(DeepFire(64, 16, 64, 64))
+        layers.append(ZipModule(64, 16, 64, 64))
 
         # in_channels = 128, squeeze_channels = 16
         # e1x1_channels = 64, e3x3_channels = 64 -> out_channels = 128
-        layers.append(DeepFire(128, 16, 64, 64))
+        layers.append(ZipModule(128, 16, 64, 64))
+
+        # in_channels = 128, squeeze_channels = 16
+        # e1x1_channels = 64, e3x3_channels = 64 -> out_channels = 128
+        layers.append(ZipModule(128, 16, 64, 64))
 
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True))
 
         # in_channels = 128, squeeze_channels = 32
         # e1x1_channels = 128, e3x3_channels = 128 -> out_channels = 256
-        layers.append(Fire(128, 32, 128, 128))
+        layers.append(ZipModule(128, 32, 128, 128))
 
         # in_channels = 256, squeeze_channels = 32
         # e1x1_channels = 128, e3x3_channels = 128 -> out_channels = 256
-        layers.append(Fire(256, 32, 128, 128))
+        layers.append(ZipModule(256, 32, 128, 128))
 
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True))
 
         # in_channels = 256, squeeze_channels = 48
         # e1x1_channels = 192, e3x3_channels = 192 -> out_channels = 384
-        layers.append(Fire(256, 48, 192, 192))
+        layers.append(ZipModule(256, 48, 192, 192))
 
         # in_channels = 384, squeeze_channels = 48
         # e1x1_channels = 192, e3x3_channels = 192 -> out_channels = 384
-        layers.append(Fire(384, 48, 192, 192))
+        layers.append(ZipModule(384, 48, 192, 192))
 
         # in_channels = 384, squeeze_channels = 64
         # e1x1_channels = 256, e3x3_channels = 256 -> out_channels = 512
-        layers.append(Fire(384, 64, 256, 256))
+        layers.append(ZipModule(384, 64, 256, 256))
 
         # in_channels = 512, squeeze_channels = 64
         # e1x1_channels = 256, e3x3_channels = 256 -> out_channels = 512
-        layers.append(Fire(512, 64, 256, 256))
+        layers.append(ZipModule(512, 64, 256, 256))
 
         return nn.Sequential(*layers)
 
-    def get_classifier(self):
+    def get_fc_net(self):
         layers = []
 
         self.final_conv = nn.Conv2d(512, self.class_count, kernel_size=1)
@@ -188,6 +158,6 @@ class ZFNetLite(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        y = self.features(x)
-        y = self.classifier(y)
+        y = self.conv_net(x)
+        y = self.fc_net(y)
         return y.view(y.size(0), self.class_count)
