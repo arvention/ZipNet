@@ -84,7 +84,7 @@ if __name__ == '__main__':
                         default=True)
 
     # dataset
-    parser.add_argument('--data_path', type=str, default='../data/c256/')
+    parser.add_argument('--data_path', type=str, default='../../data/c256/')
     parser.add_argument('--train_data_path', type=str,
                         default='data/caltech_256_60_train_nobg_norm.hdf5')
     parser.add_argument('--train_x_key', type=str, default='train_x')
