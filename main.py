@@ -50,7 +50,7 @@ def main(version, config):
         data_loader = get_loader(config.data_path + config.train_data_path,
                                  config.train_x_key, config.train_y_key,
                                  config.batch_size, config.mode)
-        solver = Solver(version, "data_loader", vars(config))
+        solver = Solver(version, data_loader, vars(config))
         solver.train()
     elif config.mode == 'test':
         data_loader = get_loader(config.data_path + config.test_data_path,
@@ -86,11 +86,11 @@ if __name__ == '__main__':
     # dataset
     parser.add_argument('--data_path', type=str, default='../../data/c256/')
     parser.add_argument('--train_data_path', type=str,
-                        default='data/caltech_256_60_train_nobg_norm.hdf5')
+                        default='caltech_256_30_train_nobg_norm.hdf5')
     parser.add_argument('--train_x_key', type=str, default='train_x')
     parser.add_argument('--train_y_key', type=str, default='train_y')
     parser.add_argument('--test_data_path', type=str,
-                        default='data/caltech_256_60_test_nobg_norm.hdf5')
+                        default='caltech_256_30_test_nobg_norm.hdf5')
     parser.add_argument('--test_x_key', type=str, default='test_x')
     parser.add_argument('--test_y_key', type=str, default='test_y')
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     # epoch step size
     parser.add_argument('--loss_log_step', type=int, default=1)
     parser.add_argument('--model_save_step', type=int, default=1)
-    parser.add_argument('--train_eval_step', type=int, default=1)
+    parser.add_argument('--train_eval_step', type=int, default=0)
 
     config = parser.parse_args()
 
