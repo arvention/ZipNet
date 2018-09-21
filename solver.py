@@ -161,8 +161,8 @@ class Solver(object):
         start_time = time.time()
         for e in range(start, self.num_epochs):
             for i, (images, labels) in enumerate(tqdm(self.data_loader)):
-                images = to_var(images)
-                labels = to_var(labels)
+                images = to_var(images, self.use_gpu)
+                labels = to_var(labels, self.use_gpu)
 
                 loss = self.model_step(images, labels)
 
