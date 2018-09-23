@@ -4,10 +4,11 @@ import time
 import datetime
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as sched
 from tqdm import tqdm
 from utils import to_var
 
-from model import ZipNet
+from gen_model import ZipNet
 
 
 class Solver(object):
@@ -49,6 +50,8 @@ class Solver(object):
             lr=self.lr,
             momentum=self.momentum
         )
+
+        self.scheduler = sched.StepLR(self.optimizer, step_size=70, gamma=0.1)
 
         # print networks
         self.print_network(self.model, 'ZipNet')
@@ -153,13 +156,14 @@ class Solver(object):
 
         # start with trained model if exists
         if self.pretrained_model:
-            start = int(self.pretrained_model.split('_')[1]) - 1
+            start = int(self.pretrained_model.split('_')[3])
         else:
             start = 0
 
         # start training
         start_time = time.time()
         for e in range(start, self.num_epochs):
+            self.scheduler.step()
             for i, (images, labels) in enumerate(tqdm(self.data_loader)):
                 images = to_var(images, self.use_gpu)
                 labels = to_var(labels, self.use_gpu)
