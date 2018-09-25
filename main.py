@@ -71,8 +71,8 @@ if __name__ == '__main__':
     # training settings
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--momentum', type=float, default=0.9)
-    parser.add_argument('--num_epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--num_epochs', type=int, default=70)
+    parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--pretrained_model', type=str,
                         default=None)
 
