@@ -112,7 +112,7 @@ class Solver(object):
         """
         path = os.path.join(
             self.model_save_path,
-            '{}_{}_{}.pth'.format(self.version, e + 1, i + 1)
+            '/{}/{}--{}.pth'.format(self.version, e + 1, i + 1)
         )
         torch.save(self.model.state_dict(), path)
 
@@ -153,7 +153,7 @@ class Solver(object):
 
         # start with trained model if exists
         if self.pretrained_model:
-            start = int(self.pretrained_model.split('_')[3])
+            start = int(self.pretrained_model.split('--')[0])
         else:
             start = 0
 
@@ -177,10 +177,10 @@ class Solver(object):
                 self.save_model(e, i)
 
             # evaluate on train dataset
-            # if (e + 1) % self.train_eval_step == 0:
-            #    top_1_acc, top_5_acc = self.train_evaluate(e)
-            #    self.top_1_acc.append((e, top_1_acc))
-            #    self.top_5_acc.append((e, top_5_acc))
+            if (e + 1) % self.train_eval_step == 0:
+                top_1_acc, top_5_acc = self.train_evaluate(e)
+                self.top_1_acc.append((e, top_1_acc))
+                self.top_5_acc.append((e, top_5_acc))
 
         # print losses
         print('\n--Losses--')
