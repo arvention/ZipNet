@@ -159,7 +159,6 @@ class Solver(object):
         # start training
         start_time = time.time()
         for e in range(start, self.num_epochs):
-            self.scheduler.step()
             for i, (images, labels) in enumerate(tqdm(self.data_loader)):
                 images = to_var(images, self.use_gpu)
                 labels = to_var(labels, self.use_gpu)
